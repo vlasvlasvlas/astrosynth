@@ -1,0 +1,4 @@
+.env
+start-claude.sh
+.DS_Store
+.claude/settings.local.json
