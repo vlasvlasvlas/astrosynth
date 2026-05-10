@@ -252,11 +252,8 @@ function drawBody(body, x, y, radius, enabled) {
 function drawProbes(vp, list, kind) {
   for (const probe of list) {
     ctx.save();
-    if (kind === "ufo") {
-      ctx.strokeStyle = probe.status === "lost" ? "#ce4f43" : "#c96a4a";
-    } else {
-      ctx.strokeStyle = probe.status === "lost" ? "#ce4f43" : "#7fa96b";
-    }
+    const probeColor = probe.color || (kind === "ufo" ? "#c96a4a" : "#7fa96b");
+    ctx.strokeStyle = probe.status === "lost" ? "#ce4f43" : probeColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let i = 0; i < probe.trail.length; i += 1) {
@@ -279,7 +276,7 @@ function drawProbes(vp, list, kind) {
       ctx.fill();
       ctx.stroke();
     } else {
-      ctx.fillStyle = probe.status === "success" ? "#d5b35e" : "#7fa96b";
+      ctx.fillStyle = probe.status === "success" ? "#d5b35e" : (probe.color || "#7fa96b");
       ctx.strokeStyle = "#050604";
       ctx.lineWidth = 2;
       ctx.beginPath();

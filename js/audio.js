@@ -277,16 +277,30 @@ export function createProbeDrone(probe, toneSlider, volumeSlider, voiceMix = "pr
   const isUfo = voiceMix === "ufo";
   const base = midiToHz(baseTone);
 
-  oscA.type = isUfo ? "square" : "sawtooth";
-  oscB.type = isUfo ? "sawtooth" : "triangle";
   lfo.type = "sine";
-  lfo.frequency.value = isUfo ? 4 + Math.random() * 3 : 0.08 + Math.random() * 0.08;
-  lfoGain.gain.value = isUfo ? 18 : 9;
+  if (isUfo) {
+    oscA.type = "square";    oscB.type = "sawtooth";
+    lfo.frequency.value = 4 + Math.random() * 3;   lfoGain.gain.value = 18;
+    filter.type = "bandpass"; filter.frequency.value = 1400; filter.Q.value = 6;
+  } else if (voiceMix === "voyager1") {
+    oscA.type = "square";    oscB.type = "sawtooth";
+    lfo.frequency.value = 2 + Math.random() * 2;   lfoGain.gain.value = 14;
+    filter.type = "bandpass"; filter.frequency.value = 900;  filter.Q.value = 4;
+  } else if (voiceMix === "voyager2") {
+    oscA.type = "sine";      oscB.type = "triangle";
+    lfo.frequency.value = 0.04 + Math.random() * 0.04; lfoGain.gain.value = 5;
+    filter.type = "lowpass";  filter.frequency.value = 600;  filter.Q.value = 2;
+  } else if (voiceMix === "voyager3") {
+    oscA.type = "triangle";  oscB.type = "sine";
+    lfo.frequency.value = 0.5 + Math.random() * 0.5; lfoGain.gain.value = 9;
+    filter.type = "lowpass";  filter.frequency.value = 500;  filter.Q.value = 3;
+  } else {
+    oscA.type = "sawtooth";  oscB.type = "triangle";
+    lfo.frequency.value = 0.08 + Math.random() * 0.08; lfoGain.gain.value = 9;
+    filter.type = "lowpass";  filter.frequency.value = 420;  filter.Q.value = 4.8;
+  }
   oscA.frequency.value = base;
   oscB.frequency.value = base * (isUfo ? 1.498 : 0.501);
-  filter.type = isUfo ? "bandpass" : "lowpass";
-  filter.frequency.value = isUfo ? 1400 : 420;
-  filter.Q.value = isUfo ? 6 : 4.8;
   gain.gain.value = Number(volumeSlider.value) / 1000;
   lfo.connect(lfoGain);
   lfoGain.connect(oscA.frequency);
@@ -308,11 +322,13 @@ export function updateProbeDrone(probe, toneSlider, volumeSlider) {
   const speed = Math.hypot(probe.vx, probe.vy);
   const r = Math.hypot(probe.x, probe.y);
   const tone = Number(toneSlider.value);
-  const isUfo = probe.audio.voiceMix === "ufo";
+  const vm = probe.audio.voiceMix;
+  const isUfo = vm === "ufo";
   const base = midiToHz(tone);
   probe.audio.oscA.frequency.setTargetAtTime(base + speed * 8, now, 0.08);
   probe.audio.oscB.frequency.setTargetAtTime((base + r * 2.2) * (isUfo ? 1.498 : 0.5), now, 0.08);
-  probe.audio.filter.frequency.setTargetAtTime((isUfo ? 800 : 240) + Math.min(2200, r * 32 + speed * 80), now, 0.18);
+  const filterBase = isUfo ? 800 : vm === "voyager1" ? 600 : vm === "voyager2" ? 400 : vm === "voyager3" ? 350 : 240;
+  probe.audio.filter.frequency.setTargetAtTime(filterBase + Math.min(2200, r * 32 + speed * 80), now, 0.18);
   probe.audio.gain.gain.setTargetAtTime(Number(volumeSlider.value) / 1000, now, 0.12);
   probe.audio.pan.pan.setTargetAtTime(panFromX(probe.x), now, 0.12);
 }
