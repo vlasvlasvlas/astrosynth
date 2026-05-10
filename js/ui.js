@@ -344,7 +344,9 @@ export function renderSelectedPanel() {
   dom.planetVolume.value = Math.round(settings.volume * 100);
   dom.planetVolumeLabel.textContent = `${Math.round(settings.volume * 100)}%`;
   dom.pitchOffset.value = settings.pitchOffset;
-  dom.pitchLabel.textContent = String(settings.pitchOffset);
+  const resultNote = body.note + settings.pitchOffset;
+  const sign = settings.pitchOffset > 0 ? "+" : "";
+  dom.pitchLabel.textContent = `${sign}${settings.pitchOffset} → ${midiToName(resultNote)}`;
   dom.planetPreset.value = settings.preset;
   dom.planetPresetLabel.textContent = `Voice for ${body.name}`;
   dom.planetAction.textContent = `${body.action}`;
@@ -399,7 +401,7 @@ export function updateHud() {
   dom.placeMode.textContent = `Place gates: ${state.placeMode ? "on" : "off"}`;
   dom.boostLabel.textContent = `${Number(dom.launchBoost.value).toFixed(1)} km/s`;
   dom.droneVolumeLabel.textContent = `${dom.droneVolume.value}%`;
-  dom.droneToneLabel.textContent = dom.droneTone.value;
+  dom.droneToneLabel.textContent = midiToName(Number(dom.droneTone.value));
   dom.gateNoteLabel.textContent = midiToName(Number(dom.gateNote.value));
   dom.trailLengthLabel.textContent = String(state.trailLength);
   refreshIcons();
