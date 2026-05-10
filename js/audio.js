@@ -275,7 +275,7 @@ export function createProbeDrone(probe, toneSlider, volumeSlider, voiceMix = "pr
   const pan = ctx.createStereoPanner();
   const baseTone = Number(toneSlider.value);
   const isUfo = voiceMix === "ufo";
-  const base = isUfo ? 90 + baseTone * 1.6 : 58 + baseTone * 1.2;
+  const base = midiToHz(baseTone);
 
   oscA.type = isUfo ? "square" : "sawtooth";
   oscB.type = isUfo ? "sawtooth" : "triangle";
@@ -309,7 +309,7 @@ export function updateProbeDrone(probe, toneSlider, volumeSlider) {
   const r = Math.hypot(probe.x, probe.y);
   const tone = Number(toneSlider.value);
   const isUfo = probe.audio.voiceMix === "ufo";
-  const base = isUfo ? 80 + tone * 1.6 : 46 + tone * 1.35;
+  const base = midiToHz(tone);
   probe.audio.oscA.frequency.setTargetAtTime(base + speed * 8, now, 0.08);
   probe.audio.oscB.frequency.setTargetAtTime((base + r * 2.2) * (isUfo ? 1.498 : 0.5), now, 0.08);
   probe.audio.filter.frequency.setTargetAtTime((isUfo ? 800 : 240) + Math.min(2200, r * 32 + speed * 80), now, 0.18);

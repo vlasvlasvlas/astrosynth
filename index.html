@@ -80,7 +80,7 @@
 
         <section class="panel selected-panel" data-panel="body">
           <h2>Body</h2>
-          <p class="panel-sub">Cuerpo seleccionado del mapa. Cambia su voz, su volumen, su preset y dispara su accion. Toca otro planeta para cambiar.</p>
+          <p class="panel-sub">Toca un planeta en el mapa para seleccionarlo. Elige su voz y dispara su accion.</p>
           <div class="selected-name" id="selectedName">Earth</div>
           <div class="small-grid">
             <div>
@@ -101,22 +101,10 @@
             <input id="planetVolume" type="range" min="0" max="100" value="72">
           </label>
           <label class="control">
-            <span>Pitch offset <output id="pitchLabel">0</output></span>
-            <input id="pitchOffset" type="range" min="-12" max="12" value="0">
-          </label>
-          <label class="control">
             <span><span id="planetPresetLabel">Voice for Earth</span></span>
             <select id="planetPreset"></select>
           </label>
-          <p class="hint" id="planetPresetHint">Cada planeta tiene su voz propia. Cambiar este menu solo afecta al planeta seleccionado.</p>
-          <label class="control">
-            <span>Delay time <output id="delayTimeLabel">0.25 s</output></span>
-            <input id="delayTime" type="range" min="0" max="1500" step="10" value="250">
-          </label>
-          <label class="control">
-            <span>Delay mix (dry/wet) <output id="delayMixLabel">0%</output></span>
-            <input id="delayMix" type="range" min="0" max="100" value="0">
-          </label>
+          <p class="hint" id="planetPresetHint">Cada planeta tiene su voz propia.</p>
           <button id="planetAction" class="wide primary" type="button">Run action</button>
           <p class="hint" id="planetActionHint">Earth: lanza una sonda.</p>
           <label class="control inline">
@@ -126,6 +114,19 @@
           <label class="control">
             <span>Auto interval <output id="autoIntervalLabel">8 s</output></span>
             <input id="autoInterval" type="range" min="2" max="60" step="1" value="8">
+          </label>
+          <div class="section-divider">Fine-tune</div>
+          <label class="control">
+            <span>Pitch shift <output id="pitchLabel">0 → A3</output></span>
+            <input id="pitchOffset" type="range" min="-12" max="12" value="0">
+          </label>
+          <label class="control">
+            <span>Delay time <output id="delayTimeLabel">0.25 s</output></span>
+            <input id="delayTime" type="range" min="0" max="1500" step="10" value="250">
+          </label>
+          <label class="control">
+            <span>Delay mix <output id="delayMixLabel">0%</output></span>
+            <input id="delayMix" type="range" min="0" max="100" value="0">
           </label>
         </section>
 
@@ -147,16 +148,7 @@
 
         <section class="panel" data-panel="probes">
           <h2>Probe Lab</h2>
-          <p class="panel-sub">Lanzar una sonda fisica desde la Tierra hacia un planeta. La sonda emite un drone continuo influenciado por su trayectoria.</p>
-          <label class="control">
-            <span>Mission profile</span>
-            <select id="probeProfile">
-              <option value="voyager1">Voyager 1</option>
-              <option value="voyager2">Voyager 2</option>
-              <option value="voyager3">Voyager 3</option>
-              <option value="free">Free probe</option>
-            </select>
-          </label>
+          <p class="panel-sub">Lanza una sonda desde la Tierra. Emite un drone continuo modulado por su velocidad y distancia al Sol.</p>
           <label class="control">
             <span>Target</span>
             <select id="probeTarget">
@@ -169,18 +161,27 @@
             </select>
           </label>
           <label class="control">
+            <span>Mission profile</span>
+            <select id="probeProfile">
+              <option value="voyager1">Voyager 1</option>
+              <option value="voyager2">Voyager 2</option>
+              <option value="voyager3">Voyager 3</option>
+              <option value="free">Free probe</option>
+            </select>
+          </label>
+          <button id="launchProbe" class="wide primary" type="button">Launch from Earth</button>
+          <label class="control">
             <span>Launch boost <output id="boostLabel">16.0 km/s</output></span>
             <input id="launchBoost" type="range" min="4" max="28" step="0.1" value="16">
           </label>
           <label class="control">
-            <span>Drone volume <output id="droneVolumeLabel">28%</output></span>
+            <span>Probe volume <output id="droneVolumeLabel">28%</output></span>
             <input id="droneVolume" type="range" min="0" max="70" value="28">
           </label>
           <label class="control">
-            <span>Drone tone <output id="droneToneLabel">42</output></span>
-            <input id="droneTone" type="range" min="0" max="100" value="42">
+            <span>Probe note <output id="droneToneLabel">G2</output></span>
+            <input id="droneTone" type="range" min="36" max="72" value="43">
           </label>
-          <button id="launchProbe" class="wide primary" type="button">Launch Earth</button>
           <div id="probeList" class="list"></div>
         </section>
       </aside>
