@@ -56,17 +56,17 @@ export function clearGates() {
   inside.clear();
 }
 
-// Map heliocentric radius to a usable note. Inner orbits = higher notes.
+// Map heliocentric radius to a D Dorian scale note. Inner orbits = higher notes.
 function noteForRadius(au) {
-  if (au < 0.55) return 72;
-  if (au < 0.9) return 67;
-  if (au < 1.2) return 64;
-  if (au < 1.8) return 60;
-  if (au < 3) return 55;
-  if (au < 7) return 50;
-  if (au < 12) return 45;
-  if (au < 22) return 40;
-  return 36;
+  if (au < 0.55) return 64; // E4 — Mercury range
+  if (au < 0.9)  return 60; // C4 — Venus range
+  if (au < 1.2)  return 57; // A3 — Earth range
+  if (au < 1.8)  return 53; // F3 — Mars range
+  if (au < 3)    return 50; // D3 — asteroid belt
+  if (au < 7)    return 45; // A2 — Jupiter range
+  if (au < 12)   return 43; // G2 — Saturn range
+  if (au < 22)   return 41; // F2 — Uranus range
+  return 38;                 // D2 — Neptune/outer
 }
 
 export function trackedBodies() {

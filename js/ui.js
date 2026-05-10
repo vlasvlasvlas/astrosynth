@@ -1,6 +1,6 @@
 import { state } from "./state.js";
 import { PLANETS, palette, planetByName } from "./bodies.js";
-import { KM_S_TO_AU_YR, TWO_PI } from "./kepler.js";
+import { KM_S_TO_AU_YR, TWO_PI, midiToName } from "./kepler.js";
 import {
   ensureAudio,
   playPlanet,
@@ -206,7 +206,7 @@ function bindEvents(canvas) {
     renderLists();
   });
   dom.gateNote.addEventListener("input", () => {
-    dom.gateNoteLabel.textContent = dom.gateNote.value;
+    dom.gateNoteLabel.textContent = midiToName(Number(dom.gateNote.value));
   });
   dom.launchProbe.addEventListener("click", () => launchProbe());
   dom.launchBoost.addEventListener("input", updateHud);
@@ -372,7 +372,7 @@ export function renderLists() {
   dom.gateList.innerHTML = state.gates.length
     ? state.gates.map((gate) => `
       <div class="item">
-        <strong>${gate.preset}</strong> note ${gate.note}
+        <strong>${gate.preset}</strong> &nbsp;<span class="note-name">${midiToName(gate.note)}</span>
         ${gate.snappedTo ? `<br><span class="muted">on ${gate.snappedTo} orbit</span>` : ""}
         <button type="button" data-remove-gate="${gate.id}">remove</button>
       </div>
@@ -400,7 +400,7 @@ export function updateHud() {
   dom.boostLabel.textContent = `${Number(dom.launchBoost.value).toFixed(1)} km/s`;
   dom.droneVolumeLabel.textContent = `${dom.droneVolume.value}%`;
   dom.droneToneLabel.textContent = dom.droneTone.value;
-  dom.gateNoteLabel.textContent = dom.gateNote.value;
+  dom.gateNoteLabel.textContent = midiToName(Number(dom.gateNote.value));
   dom.trailLengthLabel.textContent = String(state.trailLength);
   refreshIcons();
 }
