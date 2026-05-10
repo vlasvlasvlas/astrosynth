@@ -68,7 +68,7 @@ function cacheDom() {
     "readerEnabled",
     "viewScale", "placeMode",
     "trailLength", "trailLengthLabel",
-    "selectedName", "selectedDistance", "selectedVelocity",
+    "selectedName",
     "planetEnabled", "planetVolume", "planetVolumeLabel",
     "pitchOffset", "pitchLabel",
     "planetPreset", "planetPresetLabel", "planetPresetHint",
@@ -336,10 +336,6 @@ export function renderSelectedPanel() {
   const body = selectedPlanet();
   const settings = state.planetSettings.get(body.name);
   dom.selectedName.textContent = body.name;
-  const pos = state.positions.get(body.name) || { x: 0, y: 0 };
-  const vel = state.velocities.get(body.name) || { x: 0, y: 0 };
-  dom.selectedDistance.textContent = `${Math.hypot(pos.x, pos.y).toFixed(3)} AU`;
-  dom.selectedVelocity.textContent = `${Math.hypot(vel.x, vel.y).toFixed(3)} AU/y`;
   dom.planetEnabled.checked = settings.enabled;
   dom.planetVolume.value = Math.round(settings.volume * 100);
   dom.planetVolumeLabel.textContent = `${Math.round(settings.volume * 100)}%`;
