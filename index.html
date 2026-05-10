@@ -80,7 +80,7 @@
 
         <section class="panel selected-panel" data-panel="body">
           <h2>Body</h2>
-          <p class="panel-sub">Toca un planeta en el mapa para seleccionarlo. Elige su voz y dispara su accion.</p>
+          <p class="panel-sub">Toca un planeta en el mapa. Cada uno tiene una voz y una accion propia.</p>
           <div class="selected-header">
             <span class="selected-tag">selected</span>
             <div class="selected-name" id="selectedName">Earth</div>
@@ -98,27 +98,28 @@
             <select id="planetPreset"></select>
           </label>
           <p class="hint" id="planetPresetHint">Cada planeta tiene su voz propia.</p>
+          <div class="section-divider">Action</div>
+          <p class="action-desc" id="planetActionHint">Earth: lanza una sonda.</p>
           <button id="planetAction" class="wide primary" type="button">Run action</button>
-          <p class="hint" id="planetActionHint">Earth: lanza una sonda.</p>
           <label class="control inline">
             <input id="autoLaunchEnabled" type="checkbox">
-            <span>Auto-fire action</span>
+            <span>Repeat this action</span>
           </label>
           <label class="control">
-            <span>Auto interval <output id="autoIntervalLabel">8 s</output></span>
+            <span>Every <output id="autoIntervalLabel">8 s</output></span>
             <input id="autoInterval" type="range" min="2" max="60" step="1" value="8">
           </label>
-          <div class="section-divider">Fine-tune</div>
+          <div class="section-divider">Voice FX</div>
           <label class="control">
             <span>Pitch shift <output id="pitchLabel">0 → A3</output></span>
             <input id="pitchOffset" type="range" min="-12" max="12" value="0">
           </label>
           <label class="control">
-            <span>Delay time <output id="delayTimeLabel">0.25 s</output></span>
+            <span>Echo time <output id="delayTimeLabel">0.25 s</output></span>
             <input id="delayTime" type="range" min="0" max="1500" step="10" value="250">
           </label>
           <label class="control">
-            <span>Delay mix <output id="delayMixLabel">0%</output></span>
+            <span>Echo send <output id="delayMixLabel">0%</output></span>
             <input id="delayMix" type="range" min="0" max="100" value="0">
           </label>
         </section>
@@ -141,7 +142,7 @@
 
         <section class="panel" data-panel="probes">
           <h2>Probe Lab</h2>
-          <p class="panel-sub">Lanza una sonda desde la Tierra. Emite un drone continuo modulado por su velocidad y distancia al Sol.</p>
+          <p class="panel-sub">Siempre sale desde la Tierra, sin importar el planeta seleccionado en Body. La sonda emite un drone modulado por su velocidad y distancia al Sol.</p>
           <label class="control">
             <span>Target</span>
             <select id="probeTarget">
