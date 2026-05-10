@@ -23,6 +23,20 @@ const ICONS = {
   audioOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
 };
 
+const PROFILE_COLORS = {
+  voyager1: "#d5a44a",
+  voyager2: "#7badd4",
+  voyager3: "#b07ab5",
+  free:     "#7fa96b",
+};
+
+const PROFILE_DESCRIPTIONS = {
+  voyager1: "Boost alto, angulo amplio. Drone: onda cuadrada — mecanico y calido como señal de radio profunda.",
+  voyager2: "Boost medio, trayectoria recta. Drone: seno puro — suave y etereo.",
+  voyager3: "Boost medio, angulo lateral suave. Drone: triangulo — balanceado.",
+  free:     "Sin perfil fijo. Define el boost manualmente. Drone: diente de sierra clasico.",
+};
+
 const ACTION_DESCRIPTIONS = {
   Sun: "Empuja sondas y UFOs activos hacia afuera + flash brillante.",
   Mercury: "Ping rapido en registro agudo.",
@@ -44,6 +58,7 @@ export function initUi(canvas) {
   refreshIcons();
   initLayoutForViewport();
   setActiveTab("body");
+  dom.probeProfileHint.textContent = PROFILE_DESCRIPTIONS[dom.probeProfile.value] || "";
 }
 
 function initLayoutForViewport() {
@@ -77,7 +92,7 @@ function cacheDom() {
     "delayTime", "delayTimeLabel", "delayMix", "delayMixLabel",
     "clearGates", "gateList",
     "gateNote", "gateNoteLabel", "gatePreset",
-    "probeProfile", "probeTarget",
+    "probeProfile", "probeProfileHint", "probeTarget",
     "launchBoost", "boostLabel",
     "droneVolume", "droneVolumeLabel",
     "droneTone", "droneToneLabel",
@@ -209,6 +224,9 @@ function bindEvents(canvas) {
     dom.gateNoteLabel.textContent = midiToName(Number(dom.gateNote.value));
   });
   dom.launchProbe.addEventListener("click", () => launchProbe());
+  dom.probeProfile.addEventListener("change", () => {
+    dom.probeProfileHint.textContent = PROFILE_DESCRIPTIONS[dom.probeProfile.value] || "";
+  });
   dom.launchBoost.addEventListener("input", updateHud);
   dom.droneVolume.addEventListener("input", updateHud);
   dom.droneTone.addEventListener("input", updateHud);
@@ -441,6 +459,8 @@ export function launchProbe(profileName = dom.probeProfile.value) {
   const probe = {
     id: state.probeCounter,
     name,
+    profile: profileName,
+    color: PROFILE_COLORS[profileName] || PROFILE_COLORS.free,
     target: targetName,
     x: earth.x + (earth.x / earthR) * offset,
     y: earth.y + (earth.y / earthR) * offset,
@@ -454,9 +474,9 @@ export function launchProbe(profileName = dom.probeProfile.value) {
   };
   state.probes.push(probe);
   state.probeCounter += 1;
-  createProbeDrone(probe, dom.droneTone, dom.droneVolume, "probe");
+  createProbeDrone(probe, dom.droneTone, dom.droneVolume, profileName === "free" ? "probe" : profileName);
   playPlanet("Earth", 0.95, 1);
-  addPulse(earth, palette.Earth, "launch");
+  addPulse(earth, probe.color, "launch");
   logEvent(`${probe.name} launched from Earth toward ${targetName}`);
   renderLists();
 }
