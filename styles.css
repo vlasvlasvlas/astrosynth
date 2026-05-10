@@ -441,24 +441,25 @@ body.sidebar-hidden .sidebar {
   gap: 9px;
 }
 
-.selected-name {
-  margin-bottom: 10px;
-  font-size: 18px;
-  color: var(--ink);
-  letter-spacing: 0.08em;
-}
-
-.small-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.selected-header {
+  display: flex;
+  align-items: baseline;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.small-grid > div {
-  border: 1px solid var(--line);
-  background: var(--panel-2);
-  padding: 8px;
+.selected-tag {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.selected-name {
+  font-size: 18px;
+  color: var(--accent);
+  letter-spacing: 0.06em;
 }
 
 .label {
