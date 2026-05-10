@@ -367,6 +367,14 @@ body.sidebar-hidden .sidebar {
   font-style: italic;
 }
 
+.action-desc {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.55;
+  opacity: 0.8;
+}
+
 .section-divider {
   margin: 18px 0 10px;
   padding-bottom: 5px;
