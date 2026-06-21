@@ -356,4 +356,6 @@ AstroSynth debe comunicar siempre la diferencia entre:
 - Navegacion espacial real.
 
 La version actual esta en la segunda y tercera categoria: toma datos reales simplificados para producir una experiencia musical interactiva.
+## License
 
+MIT License — © 2026 [Vladimiro Bellini](https://github.com/vlasvlasvlas). Free to use and modify, attribution required.
