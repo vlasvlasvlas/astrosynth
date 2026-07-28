@@ -87,7 +87,8 @@ Botones flotantes arriba a la derecha:
 Controles globales:
 
 - Play / Pause (icono): detiene o reanuda la simulacion temporal.
-- Audio (icono de bocina): activa el motor de audio. Los navegadores requieren una accion del usuario antes de reproducir sonido.
+- Audio (icono de bocina): activa o apaga el motor de audio con rampa. Los navegadores requieren una accion del usuario antes de reproducir sonido.
+- `Master volume`: unico volumen continuo de salida. Afecta todo el instrumento.
 - Now (reloj): resetea la simulacion al instante real actual.
 - `Speed`: rango logaritmico desde **real time** (1 segundo de simulacion por segundo de reloj) hasta **10 anios por segundo**. Por defecto arranca en real time.
 - `View scale`: cambia el escalado visual del sistema solar (full system / inner planets / linear AU).
@@ -100,9 +101,8 @@ Al tocar un planeta o el Sol, este panel pasa a configurar ese cuerpo. Cada cuer
 
 Controles por cuerpo:
 
-- Voice on / off, volumen, pitch offset.
+- Voice on / off y pitch offset.
 - **Voice for [Planet]**: el preset sonoro que usa este cuerpo. Solo afecta al cuerpo seleccionado, no a todos. Los presets son `carlos`, `derbyshire`, `oram`, `oliveros`, `pade`, `radigue`, `spiegel`, `theremin`. Definidos en `js/presets.js` y editables (ver [`js/PRESETS.md`](js/PRESETS.md)).
-- **Delay time / Delay mix**: delay con feedback aplicado al sonido del planeta seleccionado. Independiente del `echo` que pueda traer el preset. Subir mix > 0% para escuchar.
 - Action: dispara la accion performatica del cuerpo (Earth lanza sonda, Mars suelta UFOs, Saturn deposita gates, etc).
 - Auto-fire action + interval: dispara la accion automaticamente cada N segundos.
 
@@ -133,7 +133,6 @@ Controles:
 - `Mission profile`: Voyager 1, Voyager 2, Voyager 3 o Free probe.
 - `Target`: planeta objetivo.
 - `Launch boost`: impulso inicial en km/s.
-- `Drone volume`: volumen del drone de la sonda.
 - `Drone tone`: color tonal del drone.
 - `Launch Earth`: lanza la sonda desde la Tierra.
 
@@ -211,9 +210,9 @@ El prototipo usa Web Audio API directamente.
 Capas actuales:
 
 - Sintesis por preset declarativo definido en `js/presets.js`. Un solo player generico interpreta los datos.
-- Delay corto y compresor global.
+- Delay corto, compresor global y salida final mono.
 - Ruido filtrado para acciones solares/nubes/barridos.
-- Drone continuo por sonda y por UFO (con voz distinta) con dos osciladores, LFO, filtro y paneo dinamico.
+- Drone continuo por sonda y por UFO (con voz distinta) con dos osciladores, LFO y filtro. El nivel interno es fijo y pasa por el master global.
 
 La activacion de audio requiere click del usuario por politicas del navegador.
 
@@ -244,8 +243,7 @@ Mapeos actuales:
 
 - Cada planeta tiene una nota base y un preset propio.
 - El usuario puede modificar pitch offset por planeta.
-- La posicion horizontal del planeta afecta paneo.
-- La fuerza del evento modifica filtro/volumen.
+- La fuerza del evento modifica filtro y articulacion, con techo de nivel acotado por el motor de audio.
 - La velocidad y distancia de la sonda modifican el drone.
 - Probes, UFOs y cometas se renderizan a opacidad 0.85 para que las orbitas se vean a traves.
 
@@ -356,6 +354,7 @@ AstroSynth debe comunicar siempre la diferencia entre:
 - Navegacion espacial real.
 
 La version actual esta en la segunda y tercera categoria: toma datos reales simplificados para producir una experiencia musical interactiva.
+
 ## License
 
 MIT License — © 2026 [Vladimiro Bellini](https://github.com/vlasvlasvlas). Free to use and modify, attribution required.

@@ -8,10 +8,39 @@ export { PRESETS, PRESET_NAMES };
 const audio = {
   ctx: null,
   master: null,
+  monoOut: null,
   delay: null,
   delayGain: null,
   compressor: null,
 };
+
+const MASTER_RAMP = 0.08;
+const PLANET_EVENT_PEAK = 0.58;
+const MAX_EVENT_PEAK = 0.72;
+const PROBE_DRONE_GAIN = 0.026;
+const UFO_DRONE_GAIN = 0.018;
+
+function smoothParam(param, value, now, ramp = MASTER_RAMP) {
+  if (!param) return;
+  if (typeof param.cancelAndHoldAtTime === "function") {
+    param.cancelAndHoldAtTime(now);
+  } else {
+    const held = param.value;
+    param.cancelScheduledValues(now);
+    param.setValueAtTime(held, now);
+  }
+  param.linearRampToValueAtTime(value, now + ramp);
+}
+
+function masterTargetGain() {
+  return state.audioOn ? state.masterVolume : 0;
+}
+
+export function updateMasterVolume(value = state.masterVolume) {
+  state.masterVolume = Math.max(0, Math.min(1, value));
+  if (!audio.ctx || !audio.master) return;
+  smoothParam(audio.master.gain, masterTargetGain(), audio.ctx.currentTime);
+}
 
 export function audioContext() {
   return audio.ctx;
@@ -21,6 +50,8 @@ export function ensureAudio(onArmed) {
   if (audio.ctx) {
     if (audio.ctx.state === "suspended") audio.ctx.resume();
     state.audioOn = true;
+    updateMasterVolume();
+    onArmed?.();
     return audio;
   }
 
@@ -29,14 +60,19 @@ export function ensureAudio(onArmed) {
 
   audio.ctx = new AudioContext();
   audio.master = audio.ctx.createGain();
-  audio.master.gain.value = 0.7;
+  audio.master.gain.value = 0;
 
   audio.compressor = audio.ctx.createDynamicsCompressor();
-  audio.compressor.threshold.value = -18;
-  audio.compressor.knee.value = 20;
-  audio.compressor.ratio.value = 8;
+  audio.compressor.threshold.value = -20;
+  audio.compressor.knee.value = 18;
+  audio.compressor.ratio.value = 10;
   audio.compressor.attack.value = 0.006;
   audio.compressor.release.value = 0.18;
+
+  audio.monoOut = audio.ctx.createGain();
+  audio.monoOut.channelCount = 1;
+  audio.monoOut.channelCountMode = "explicit";
+  audio.monoOut.channelInterpretation = "speakers";
 
   audio.delay = audio.ctx.createDelay(1.5);
   audio.delay.delayTime.value = 0.28;
@@ -48,14 +84,21 @@ export function ensureAudio(onArmed) {
   audio.master.connect(audio.compressor);
   audio.master.connect(audio.delay);
   audio.delay.connect(audio.compressor);
-  audio.compressor.connect(audio.ctx.destination);
+  audio.compressor.connect(audio.monoOut);
+  audio.monoOut.connect(audio.ctx.destination);
   state.audioOn = true;
+  updateMasterVolume();
   onArmed?.();
   return audio;
 }
 
-function panFromX(x) {
-  return Math.max(-0.95, Math.min(0.95, x / 12));
+export function stopAudio() {
+  if (!audio.ctx || !audio.master) {
+    state.audioOn = false;
+    return;
+  }
+  state.audioOn = false;
+  smoothParam(audio.master.gain, 0, audio.ctx.currentTime);
 }
 
 function resolveFilterFreq(filter, baseFreq, strength) {
@@ -65,10 +108,11 @@ function resolveFilterFreq(filter, baseFreq, strength) {
 }
 
 // Data-driven preset player. Reads a preset record from presets.js.
-function playWithPreset(preset, ctx, freq, peak, panNode, strength) {
+function playWithPreset(preset, ctx, freq, peak, outputNode, strength) {
   const now = ctx.currentTime;
   const dur = preset.duration || 1;
   const env = preset.env || { attack: 0.01, release: 0.4, peak: 0.25 };
+  const eventPeak = Math.max(0, Math.min(MAX_EVENT_PEAK, peak));
   const masterGain = ctx.createGain();
   masterGain.gain.value = 1;
 
@@ -117,7 +161,7 @@ function playWithPreset(preset, ctx, freq, peak, panNode, strength) {
     masterGain.gain.cancelScheduledValues(now);
     masterGain.gain.setValueAtTime(0.0001, now);
     masterGain.gain.exponentialRampToValueAtTime(
-      Math.max(0.0002, peak * (env.peak || 0.25)),
+      Math.max(0.0002, eventPeak * (env.peak || 0.25)),
       now + env.attack
     );
     masterGain.gain.exponentialRampToValueAtTime(0.0001, now + env.attack + env.release);
@@ -129,7 +173,7 @@ function playWithPreset(preset, ctx, freq, peak, panNode, strength) {
       const g = ctx.createGain();
       osc.type = "sine";
       osc.frequency.value = freq * h.mul;
-      const lvl = peak * (env.peak || 0.18) * (h.level || 1);
+      const lvl = eventPeak * (env.peak || 0.18) * (h.level || 1);
       const decay = h.decay || env.release || 0.5;
       g.gain.setValueAtTime(0.0001, now);
       g.gain.exponentialRampToValueAtTime(lvl, now + (env.attack || 0.005));
@@ -163,10 +207,10 @@ function playWithPreset(preset, ctx, freq, peak, panNode, strength) {
     src.connect(filter);
     filter.connect(masterGain);
     src.start();
-    masterGain.gain.value = peak * (env.peak || 0.22);
+    masterGain.gain.value = eventPeak * (env.peak || 0.22);
   }
 
-  // Optional echo send.
+  // Optional echo baked into the preset timbre.
   if (preset.echo) {
     const delay = ctx.createDelay(2);
     const fb = ctx.createGain();
@@ -178,41 +222,17 @@ function playWithPreset(preset, ctx, freq, peak, panNode, strength) {
     fb.connect(delay);
     masterGain.connect(delay);
     delay.connect(wet);
-    wet.connect(panNode);
+    wet.connect(outputNode);
   }
 
-  masterGain.connect(panNode);
+  masterGain.connect(outputNode);
 }
 
-function panNode(panX) {
-  const pan = audio.ctx.createStereoPanner();
-  pan.pan.setValueAtTime(panFromX(panX), audio.ctx.currentTime);
-  pan.connect(audio.master);
-  return pan;
-}
-
-// User-configurable per-planet delay, layered on top of the preset's own echo.
-// Returns the upstream entry node — the synth chain connects here.
-function delayWrap(downstream, time, mix) {
-  const ctx = audio.ctx;
-  const split = ctx.createGain();
-  const dry = ctx.createGain();
-  const delay = ctx.createDelay(2);
-  const fb = ctx.createGain();
-  const wet = ctx.createGain();
-  dry.gain.value = Math.max(0, 1 - mix);
-  wet.gain.value = mix;
-  delay.delayTime.value = Math.max(0.01, Math.min(2, time));
-  // Feedback grows with mix so wet repeats are audible without runaway.
-  fb.gain.value = Math.min(0.7, mix * 0.55);
-  split.connect(dry);
-  dry.connect(downstream);
-  split.connect(delay);
-  delay.connect(fb);
-  fb.connect(delay);
-  delay.connect(wet);
-  wet.connect(downstream);
-  return split;
+function outputNode() {
+  const out = audio.ctx.createGain();
+  out.gain.value = 1;
+  out.connect(audio.master);
+  return out;
 }
 
 export function playPlanet(name, strength = 1, octave = 0) {
@@ -224,27 +244,24 @@ export function playPlanet(name, strength = 1, octave = 0) {
 
   const note = body.note + settings.pitchOffset + octave * 12;
   const freq = midiToHz(note);
-  const pos = state.positions.get(name) || { x: 0, y: 0 };
   const preset = PRESETS[settings.preset] || PRESETS.carlos;
-  const peak = settings.volume * strength;
+  const peak = PLANET_EVENT_PEAK * strength;
 
-  let target = panNode(pos.x);
-  if ((settings.delayMix ?? 0) > 0.001) {
-    target = delayWrap(target, settings.delayTime ?? 0.25, settings.delayMix);
-  }
+  const target = outputNode();
   playWithPreset(preset, audio.ctx, freq, peak, target, strength);
 }
 
-export function playPreset(presetName, note, peak, panX = 0, strength = 1) {
+export function playPreset(presetName, note, peak, _positionX = 0, strength = 1) {
   if (!state.audioOn || !audio.ctx) return;
   const preset = PRESETS[presetName] || PRESETS.carlos;
   const freq = midiToHz(note);
-  playWithPreset(preset, audio.ctx, freq, peak, panNode(panX), strength);
+  playWithPreset(preset, audio.ctx, freq, peak, outputNode(), strength);
 }
 
 export function playNoise(colorName, length = 0.25, amount = 0.18) {
   if (!state.audioOn || !audio.ctx) return;
   const ctx = audio.ctx;
+  const now = ctx.currentTime;
   const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * length), ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
@@ -255,14 +272,17 @@ export function playNoise(colorName, length = 0.25, amount = 0.18) {
   filter.type = colorName === "dark" ? "lowpass" : "bandpass";
   filter.frequency.value = colorName === "dark" ? 700 : 2400;
   filter.Q.value = 1.5;
-  gain.gain.value = amount;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.linearRampToValueAtTime(Math.min(MAX_EVENT_PEAK, amount), now + 0.018);
+  gain.gain.linearRampToValueAtTime(0.0001, now + Math.max(0.04, length));
   src.connect(filter);
   filter.connect(gain);
   gain.connect(audio.master);
-  src.start();
+  src.start(now);
+  src.stop(now + length + 0.05);
 }
 
-export function createProbeDrone(probe, toneSlider, volumeSlider, voiceMix = "probe") {
+export function createProbeDrone(probe, toneSlider, _volumeSlider, voiceMix = "probe") {
   if (!state.audioOn || !audio.ctx) return;
   const ctx = audio.ctx;
   const now = ctx.currentTime;
@@ -272,7 +292,7 @@ export function createProbeDrone(probe, toneSlider, volumeSlider, voiceMix = "pr
   const lfoGain = ctx.createGain();
   const filter = ctx.createBiquadFilter();
   const gain = ctx.createGain();
-  const pan = ctx.createStereoPanner();
+  const output = ctx.createGain();
   const baseTone = Number(toneSlider.value);
   const isUfo = voiceMix === "ufo";
   const base = midiToHz(baseTone);
@@ -301,21 +321,22 @@ export function createProbeDrone(probe, toneSlider, volumeSlider, voiceMix = "pr
   }
   oscA.frequency.value = base;
   oscB.frequency.value = base * (isUfo ? 1.498 : 0.501);
-  gain.gain.value = Number(volumeSlider.value) / 1000;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.linearRampToValueAtTime(isUfo ? UFO_DRONE_GAIN : PROBE_DRONE_GAIN, now + 0.18);
   lfo.connect(lfoGain);
   lfoGain.connect(oscA.frequency);
   oscA.connect(filter);
   oscB.connect(filter);
   filter.connect(gain);
-  gain.connect(pan);
-  pan.connect(audio.master);
+  gain.connect(output);
+  output.connect(audio.master);
   oscA.start(now);
   oscB.start(now);
   lfo.start(now);
-  probe.audio = { oscA, oscB, lfo, filter, gain, pan, voiceMix };
+  probe.audio = { oscA, oscB, lfo, filter, gain, output, voiceMix };
 }
 
-export function updateProbeDrone(probe, toneSlider, volumeSlider) {
+export function updateProbeDrone(probe, toneSlider) {
   if (!probe.audio || !audio.ctx) return;
   const ctx = audio.ctx;
   const now = ctx.currentTime;
@@ -329,8 +350,7 @@ export function updateProbeDrone(probe, toneSlider, volumeSlider) {
   probe.audio.oscB.frequency.setTargetAtTime((base + r * 2.2) * (isUfo ? 1.498 : 0.5), now, 0.08);
   const filterBase = isUfo ? 800 : vm === "voyager1" ? 600 : vm === "voyager2" ? 400 : vm === "voyager3" ? 350 : 240;
   probe.audio.filter.frequency.setTargetAtTime(filterBase + Math.min(2200, r * 32 + speed * 80), now, 0.18);
-  probe.audio.gain.gain.setTargetAtTime(Number(volumeSlider.value) / 1000, now, 0.12);
-  probe.audio.pan.pan.setTargetAtTime(panFromX(probe.x), now, 0.12);
+  probe.audio.gain.gain.setTargetAtTime(isUfo ? UFO_DRONE_GAIN : PROBE_DRONE_GAIN, now, 0.12);
 }
 
 export function stopProbeDrone(probe) {

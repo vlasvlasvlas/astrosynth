@@ -154,7 +154,7 @@ Solo aplica a `voices` (no a `additive` ni `noise`).
 echo: { time: 0.18, feedback: 0.35, mix: 0.32 }
 ```
 
-Crea un eco "horneado" en la voz. Distinto del **delay per-planeta de la UI** (sliders Delay time / Delay mix en el panel Body), que se aplica encima de cualquier preset y es el que controla el usuario en vivo.
+Crea un eco "horneado" en la voz. No agrega controles de volumen por objeto: todo queda bajo el master global.
 
 | campo      | unidad         | que hace                            |
 | ---------- | -------------- | ----------------------------------- |
@@ -256,5 +256,5 @@ whoosh: {
 - Si clickea al disparar, subí `attack` (5–15 ms suele alcanzar).
 - Para drones largos, subí `attack` y `release` (0.3–2 s) y `duration` acorde.
 - Para percusivo, `attack` corto (1–5 ms) y `release` corto (0.1–0.3 s).
-- El **delay per-planeta** de la UI (Body > Delay time / Delay mix) es independiente del `echo` del preset. Podes combinarlos.
+- El `echo` del preset queda interno al timbre. El nivel final pasa siempre por el master global.
 - Los osciladores de Web Audio no soportan automation curves complejas: si necesitas algo muy especifico, considera dos `voices` con `freqMul` distintos en lugar de inventar nuevos campos.

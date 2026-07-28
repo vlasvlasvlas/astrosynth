@@ -3,6 +3,8 @@ import { PLANETS, palette, planetByName } from "./bodies.js";
 import { KM_S_TO_AU_YR, TWO_PI, midiToName } from "./kepler.js";
 import {
   ensureAudio,
+  stopAudio,
+  updateMasterVolume,
   playPlanet,
   playPreset,
   playNoise,
@@ -79,22 +81,21 @@ function cacheDom() {
   const ids = [
     "dateReadout", "modeReadout", "audioReadout", "probeReadout",
     "playToggle", "audioToggle", "nowButton",
+    "masterVolume", "masterVolumeLabel",
     "speed", "speedLabel",
     "readerEnabled",
     "viewScale", "placeMode",
     "trailLength", "trailLengthLabel",
     "selectedName",
-    "planetEnabled", "planetVolume", "planetVolumeLabel",
+    "planetEnabled",
     "pitchOffset", "pitchLabel",
     "planetPreset", "planetPresetLabel", "planetPresetHint",
     "planetAction", "planetActionHint",
     "autoLaunchEnabled", "autoInterval", "autoIntervalLabel",
-    "delayTime", "delayTimeLabel", "delayMix", "delayMixLabel",
     "clearGates", "gateList",
     "gateNote", "gateNoteLabel", "gatePreset",
     "probeProfile", "probeProfileHint", "probeTarget",
     "launchBoost", "boostLabel",
-    "droneVolume", "droneVolumeLabel",
     "droneTone", "droneToneLabel",
     "launchProbe", "probeList",
     "aboutButton", "aboutModal", "aboutClose",
@@ -137,7 +138,12 @@ function bindEvents(canvas) {
     updateHud();
   });
   dom.audioToggle.addEventListener("click", () => {
-    ensureAudio(() => logEvent("Audio engine armed"));
+    if (state.audioOn) {
+      stopAudio();
+      logEvent("Audio engine off");
+    } else {
+      ensureAudio(() => logEvent("Audio engine armed"));
+    }
     refreshIcons();
     updateHud();
   });
@@ -149,6 +155,11 @@ function bindEvents(canvas) {
   dom.speed.addEventListener("input", () => {
     setSpeedFromSlider();
     updateHud();
+  });
+  dom.masterVolume.addEventListener("input", () => {
+    const value = Number(dom.masterVolume.value) / 100;
+    updateMasterVolume(value);
+    dom.masterVolumeLabel.textContent = `${dom.masterVolume.value}%`;
   });
   dom.readerEnabled.addEventListener("change", () => {
     state.readerEnabled = dom.readerEnabled.checked;
@@ -172,10 +183,6 @@ function bindEvents(canvas) {
     state.planetSettings.get(state.selected).enabled = dom.planetEnabled.checked;
     renderSelectedPanel();
   });
-  dom.planetVolume.addEventListener("input", () => {
-    state.planetSettings.get(state.selected).volume = Number(dom.planetVolume.value) / 100;
-    renderSelectedPanel();
-  });
   dom.pitchOffset.addEventListener("input", () => {
     state.planetSettings.get(state.selected).pitchOffset = Number(dom.pitchOffset.value);
     renderSelectedPanel();
@@ -197,18 +204,6 @@ function bindEvents(canvas) {
     settings.autoIntervalMs = seconds * 1000;
     dom.autoIntervalLabel.textContent = `${seconds} s`;
   });
-  dom.delayTime.addEventListener("input", () => {
-    const settings = state.planetSettings.get(state.selected);
-    const ms = Number(dom.delayTime.value);
-    settings.delayTime = ms / 1000;
-    dom.delayTimeLabel.textContent = `${(settings.delayTime).toFixed(2)} s`;
-  });
-  dom.delayMix.addEventListener("input", () => {
-    const settings = state.planetSettings.get(state.selected);
-    const pct = Number(dom.delayMix.value);
-    settings.delayMix = pct / 100;
-    dom.delayMixLabel.textContent = `${pct}%`;
-  });
   dom.clearGates.addEventListener("click", () => {
     clearGates();
     renderLists();
@@ -228,7 +223,6 @@ function bindEvents(canvas) {
     dom.probeProfileHint.textContent = PROFILE_DESCRIPTIONS[dom.probeProfile.value] || "";
   });
   dom.launchBoost.addEventListener("input", updateHud);
-  dom.droneVolume.addEventListener("input", updateHud);
   dom.droneTone.addEventListener("input", updateHud);
 
   dom.aboutButton.addEventListener("click", () => {
@@ -295,8 +289,6 @@ function formatSpeed(dps) {
 }
 
 function handleCanvasClick(event, canvas) {
-  ensureAudio(() => logEvent("Audio engine armed"));
-  refreshIcons();
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
@@ -355,8 +347,6 @@ export function renderSelectedPanel() {
   const settings = state.planetSettings.get(body.name);
   dom.selectedName.textContent = body.name;
   dom.planetEnabled.checked = settings.enabled;
-  dom.planetVolume.value = Math.round(settings.volume * 100);
-  dom.planetVolumeLabel.textContent = `${Math.round(settings.volume * 100)}%`;
   dom.pitchOffset.value = settings.pitchOffset;
   const resultNote = body.note + settings.pitchOffset;
   const sign = settings.pitchOffset > 0 ? "+" : "";
@@ -369,12 +359,6 @@ export function renderSelectedPanel() {
   const seconds = Math.round(settings.autoIntervalMs / 1000);
   dom.autoInterval.value = seconds;
   dom.autoIntervalLabel.textContent = `${seconds} s`;
-  const delayMs = Math.round((settings.delayTime ?? 0.25) * 1000);
-  dom.delayTime.value = delayMs;
-  dom.delayTimeLabel.textContent = `${(delayMs / 1000).toFixed(2)} s`;
-  const mixPct = Math.round((settings.delayMix ?? 0) * 100);
-  dom.delayMix.value = mixPct;
-  dom.delayMixLabel.textContent = `${mixPct}%`;
   updatePresetHint();
 }
 
@@ -413,8 +397,9 @@ export function updateHud() {
   dom.audioReadout.textContent = state.audioOn ? "audio on" : "audio off";
   dom.probeReadout.textContent = `${state.probes.length} probes / ${state.ufos.length} ufos`;
   dom.placeMode.textContent = `Place gates: ${state.placeMode ? "on" : "off"}`;
+  dom.masterVolume.value = Math.round(state.masterVolume * 100);
+  dom.masterVolumeLabel.textContent = `${dom.masterVolume.value}%`;
   dom.boostLabel.textContent = `${Number(dom.launchBoost.value).toFixed(1)} km/s`;
-  dom.droneVolumeLabel.textContent = `${dom.droneVolume.value}%`;
   dom.droneToneLabel.textContent = midiToName(Number(dom.droneTone.value));
   dom.gateNoteLabel.textContent = midiToName(Number(dom.gateNote.value));
   dom.trailLengthLabel.textContent = String(state.trailLength);
@@ -432,7 +417,6 @@ export function logEvent(text) {
 }
 
 export function launchProbe(profileName = dom.probeProfile.value) {
-  ensureAudio(() => logEvent("Audio engine armed"));
   updatePlanetCache();
   const earth = state.positions.get("Earth");
   const earthV = state.velocities.get("Earth");
@@ -474,7 +458,7 @@ export function launchProbe(profileName = dom.probeProfile.value) {
   };
   state.probes.push(probe);
   state.probeCounter += 1;
-  createProbeDrone(probe, dom.droneTone, dom.droneVolume, profileName === "free" ? "probe" : profileName);
+  createProbeDrone(probe, dom.droneTone, null, profileName === "free" ? "probe" : profileName);
   playPlanet("Earth", 0.95, 1);
   addPulse(earth, probe.color, "launch");
   logEvent(`${probe.name} launched from Earth toward ${targetName}`);
@@ -482,7 +466,6 @@ export function launchProbe(profileName = dom.probeProfile.value) {
 }
 
 function spawnUfoSwarm() {
-  ensureAudio(() => logEvent("Audio engine armed"));
   updatePlanetCache();
   const mars = state.positions.get("Mars");
   const marsV = state.velocities.get("Mars");
@@ -507,7 +490,7 @@ function spawnUfoSwarm() {
     };
     state.ufos.push(ufo);
     state.ufoCounter += 1;
-    createProbeDrone(ufo, dom.droneTone, dom.droneVolume, "ufo");
+    createProbeDrone(ufo, dom.droneTone, null, "ufo");
   }
   addPulse(mars, palette.Mars, "ufo");
   playPreset("derbyshire", 70, 0.8, mars.x, 1.2);
@@ -516,7 +499,6 @@ function spawnUfoSwarm() {
 }
 
 export function runActionFor(name) {
-  ensureAudio(() => logEvent("Audio engine armed"));
   const pos = state.positions.get(name) || { x: 0, y: 0 };
   if (name === "Earth") { launchProbe("free"); return; }
   if (name === "Mars") { spawnUfoSwarm(); return; }

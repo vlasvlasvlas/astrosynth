@@ -27,18 +27,16 @@ export const state = {
   lastUiUpdate: 0,
   nextCometAt: 0,
   trailLength: 340,
+  masterVolume: 0.7,
 };
 
 for (const body of [SUN, ...PLANETS]) {
   state.planetSettings.set(body.name, {
     enabled: true,
-    volume: body.name === "Sun" ? 0.58 : 0.72,
     pitchOffset: 0,
     preset: DEFAULT_PRESETS[body.name] || "carlos",
     autoLaunch: false,
     autoIntervalMs: 8000,
     lastAutoAt: 0,
-    delayTime: 0.25,
-    delayMix: 0,
   });
 }

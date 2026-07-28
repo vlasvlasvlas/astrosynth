@@ -57,6 +57,10 @@
             </button>
           </div>
           <label class="control">
+            <span>Master volume <output id="masterVolumeLabel">70%</output></span>
+            <input id="masterVolume" type="range" min="0" max="100" value="70">
+          </label>
+          <label class="control">
             <span>Speed <output id="speedLabel">real time</output></span>
             <input id="speed" type="range" min="0" max="100" value="0">
           </label>
@@ -90,10 +94,6 @@
             <span>Voice on</span>
           </label>
           <label class="control">
-            <span>Volume <output id="planetVolumeLabel">72%</output></span>
-            <input id="planetVolume" type="range" min="0" max="100" value="72">
-          </label>
-          <label class="control">
             <span><span id="planetPresetLabel">Voice for Earth</span></span>
             <select id="planetPreset"></select>
           </label>
@@ -113,14 +113,6 @@
           <label class="control">
             <span>Pitch shift <output id="pitchLabel">0 → A3</output></span>
             <input id="pitchOffset" type="range" min="-12" max="12" value="0">
-          </label>
-          <label class="control">
-            <span>Echo time <output id="delayTimeLabel">0.25 s</output></span>
-            <input id="delayTime" type="range" min="0" max="1500" step="10" value="250">
-          </label>
-          <label class="control">
-            <span>Echo send <output id="delayMixLabel">0%</output></span>
-            <input id="delayMix" type="range" min="0" max="100" value="0">
           </label>
         </section>
 
@@ -168,10 +160,6 @@
           <label class="control">
             <span>Launch boost <output id="boostLabel">16.0 km/s</output></span>
             <input id="launchBoost" type="range" min="4" max="28" step="0.1" value="16">
-          </label>
-          <label class="control">
-            <span>Probe volume <output id="droneVolumeLabel">28%</output></span>
-            <input id="droneVolume" type="range" min="0" max="70" value="28">
           </label>
           <label class="control">
             <span>Probe note <output id="droneToneLabel">G2</output></span>

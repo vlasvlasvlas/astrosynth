@@ -68,7 +68,7 @@ export function advanceProbes(deltaDays, dom, addPulse, logEvent) {
   for (const probe of state.probes) {
     if (probe.status === "lost" || probe.status === "interstellar") continue;
     integrateTracer(probe, deltaDays);
-    updateProbeDrone(probe, dom.droneTone, dom.droneVolume);
+    updateProbeDrone(probe, dom.droneTone);
     evaluateProbe(probe, addPulse, logEvent);
   }
 }
@@ -77,7 +77,7 @@ export function advanceUfos(deltaDays, dom, addPulse, logEvent) {
   for (const ufo of state.ufos) {
     if (ufo.status === "lost" || ufo.status === "interstellar") continue;
     integrateTracer(ufo, deltaDays);
-    updateProbeDrone(ufo, dom.droneTone, dom.droneVolume);
+    updateProbeDrone(ufo, dom.droneTone);
     evaluateUfo(ufo, addPulse, logEvent);
   }
 }
