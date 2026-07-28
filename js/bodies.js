@@ -48,7 +48,7 @@ export const SUN = {
 // Names reference women pioneers of electronic music.
 export const DEFAULT_PRESETS = {
   Sun: "pade",
-  Mercury: "spiegel",
+  Mercury: "radigue",
   Venus: "radigue",
   Earth: "carlos",
   Mars: "derbyshire",
